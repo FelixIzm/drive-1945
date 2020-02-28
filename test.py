@@ -5,6 +5,7 @@ from googleapiclient.discovery import build
 from string import Template
 import pprint
 import io
+from pathlib import Path
 
 pp = pprint.PrettyPrinter(indent=4)
 SCOPES = ['https://www.googleapis.com/auth/drive']
@@ -14,7 +15,9 @@ service = build('drive', 'v3', credentials=credentials)
 
 #service.files().delete(fileId='0B4n1_ERzWhI7c3RhcnRlcl9maWxl').execute()
 
-name_root_folder = 'Folder' 
+name_root_folder = 'Folder'
+tmpFolder='tmp'
+Path(tmpFolder).mkdir(parents=True, exist_ok=True)
 
 root_results = service.files().list(pageSize=10,fields="nextPageToken, files(id, name, mimeType)",q=Template("name contains '$name_root_folder'").safe_substitute(name_root_folder=name_root_folder)).execute()
 #pp.pprint(root_results)
@@ -41,27 +44,30 @@ def save_to_folder(name_folder_save):
     for file in list_files['files']:
         control_list_file.append(file['name'])
     ################################################################################
-    return
-    tmpFolder='tmp/'
-    file_path = tmpFolder+'google.ico'
-    url = 'http://google.com/favicon.ico'
-    r = requests.get(url, allow_redirects=True)
-    f = open(file_path, 'wb')
-    f.write(r.content)
-    f.close()
-    name = 'google.ico'
-    file_path = file_path
-    file_metadata = {'name': name,'parents': [id_folder_save]}
-    media = MediaFileUpload(file_path, resumable=True)
-    r = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
-    if(r['id']):
-        media = None
-        os.remove(file_path)
+    #return
+
+    name = 'favicon.ico'
+    if(name not in control_list_file):
+        print(name)
+        file_path = tmpFolder+'/'+name
+        url = 'http://google.com/favicon.ico'
+        r = requests.get(url, allow_redirects=True)
+        f = open(file_path, 'wb')
+        f.write(r.content)
+        f.close()
+        file_path = file_path
+        file_metadata = {'name': name,'parents': [id_folder_save]}
+        media = MediaFileUpload(file_path, resumable=True)
+        r = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
+        if(r['id']):
+            media = None
+            os.remove(file_path)
     return web_link
 #################################
 
 f_save = 'Result_707876543'
-save_to_folder(f_save)
+link = save_to_folder(f_save)
+print('ссылка на каталог = '+link)
 
 
 
